@@ -21,6 +21,13 @@ public class WeatherApiClient(HttpClient httpClient)
 
         return forecasts?.ToArray() ?? [];
     }
+
+    public async Task<WeatherForecast?> GetIdealWeatherAsync(CancellationToken cancellationToken = default)
+    {
+        WeatherForecast? idealWeatherForecast = await httpClient.GetFromJsonAsync<WeatherForecast>("/idealweatherforecast", cancellationToken);
+
+        return idealWeatherForecast;
+    }
 }
 
 public record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
