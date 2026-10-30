@@ -19,12 +19,21 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+bool simulateError = true;
+
 string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
 
 app.MapGet("/", () => "API service is running. Navigate to /weatherforecast to see sample data.");
 
 app.MapGet("/weatherforecast", () =>
 {
+    if (simulateError)
+    {
+        simulateError = false;
+
+        throw new Exception("Simulated error");
+    }
+    
     var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
