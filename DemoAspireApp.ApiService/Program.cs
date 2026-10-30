@@ -1,3 +1,6 @@
+using DemoAspireApp.ApiService;
+using Microsoft.AspNetCore.Mvc;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -36,6 +39,12 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapGet("/idealweatherforecast", ([FromServices] IIdealWeatherForecastProvider idealWeatherForecastProvider) =>
+{
+    return idealWeatherForecastProvider.GetIdealWeatherForecastAsync();
+})
+.WithName("GetIdealWeatherForecast");
 
 app.MapDefaultEndpoints();
 
