@@ -1,138 +1,95 @@
-diff --git a/DemoAspireApp.ApiService/DemoAspireApp.ApiService.csproj b/DemoAspireApp.ApiService/DemoAspireApp.ApiService.csproj
-index c3a2cfb..63ac042 100644
---- a/DemoAspireApp.ApiService/DemoAspireApp.ApiService.csproj
-+++ b/DemoAspireApp.ApiService/DemoAspireApp.ApiService.csproj
-@@ -11,6 +11,7 @@
-   </ItemGroup>
- 
-   <ItemGroup>
-+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="13.6.4" />
-     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-   </ItemGroup>
- 
-diff --git a/DemoAspireApp.ApiService/Domain.Model/MyDbContext.cs b/DemoAspireApp.ApiService/Domain.Model/MyDbContext.cs
-new file mode 100644
-index 0000000..dfc6e16
---- /dev/null
-+++ b/DemoAspireApp.ApiService/Domain.Model/MyDbContext.cs
-@@ -0,0 +1,20 @@
-+﻿using Microsoft.EntityFrameworkCore;
-+
-+namespace DemoAspireApp.ApiService.Domain.Model
-+{
-+    public class MyDbContext(DbContextOptions<MyDbContext> options) : DbContext(options)
-+    {
-+        public DbSet<Task> Tasks { get; set; }
-+
-+        protected override void OnModelCreating(ModelBuilder modelBuilder)
-+        {
-+            modelBuilder.Entity<Task>(entity =>
-+            {
-+                entity.ToTable("Tasks");
-+                entity.HasKey(e => e.Id);
-+                entity.Property(e => e.Description).IsRequired();
-+                entity.Property(e => e.Deadline).IsRequired();
-+            });
-+        }
-+    }
-+}
-diff --git a/DemoAspireApp.ApiService/Domain.Model/Task.cs b/DemoAspireApp.ApiService/Domain.Model/Task.cs
-new file mode 100644
-index 0000000..977845a
---- /dev/null
-+++ b/DemoAspireApp.ApiService/Domain.Model/Task.cs
-@@ -0,0 +1,9 @@
-+﻿namespace DemoAspireApp.ApiService.Domain.Model
-+{
-+    public class Task
-+    {
-+        public int Id { get; set; }
-+        public string Description { get; set; }
-+        public DateTime Deadline { get; set; }
-+    }
-+}
-\ No newline at end of file
-diff --git a/DemoAspireApp.ApiService/Program.cs b/DemoAspireApp.ApiService/Program.cs
-index 570ff49..e823b2f 100644
---- a/DemoAspireApp.ApiService/Program.cs
-+++ b/DemoAspireApp.ApiService/Program.cs
-@@ -1,3 +1,6 @@
-+using DemoAspireApp.ApiService.Domain.Model;
-+using Microsoft.EntityFrameworkCore;
-+
- var builder = WebApplication.CreateBuilder(args);
- 
- // Add service defaults & Aspire client integrations.
-@@ -9,6 +12,8 @@ builder.Services.AddProblemDetails();
- // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
- builder.Services.AddOpenApi();
- 
-+builder.AddSqlServerDbContext<MyDbContext>(connectionName: "MyDemoDatabase");
-+
- var app = builder.Build();
- 
- // Configure the HTTP request pipeline.
-@@ -37,6 +42,13 @@ app.MapGet("/weatherforecast", () =>
- })
- .WithName("GetWeatherForecast");
- 
-+app.MapGet("/tasks", async (MyDbContext dbContext) =>
-+{
-+    var tasks = await dbContext.Tasks.ToListAsync();
-+    return tasks;
-+})
-+.WithName("GetTasks");
-+
- app.MapDefaultEndpoints();
- 
- app.Run();
 diff --git a/DemoAspireApp.AppHost/AppHost.cs b/DemoAspireApp.AppHost/AppHost.cs
-index 4a0fdea..a024d95 100644
+index a024d95..2311543 100644
 --- a/DemoAspireApp.AppHost/AppHost.cs
 +++ b/DemoAspireApp.AppHost/AppHost.cs
-@@ -1,9 +1,20 @@
+@@ -1,20 +1,12 @@
  var builder = DistributedApplication.CreateBuilder(args);
  
-+var initialSqlScript = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Files", "DatabaseInitialScript.sql"));
-+
-+var sqlServer = builder
-+    .AddSqlServer("sqlServer");
-+
-+var database = sqlServer.AddDatabase("MyDemoDatabase");
-+
-+database.WithCreationScript(initialSqlScript);
-+
+-var initialSqlScript = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Files", "DatabaseInitialScript.sql"));
+-
+-var sqlServer = builder
+-    .AddSqlServer("sqlServer");
+-
+-var database = sqlServer.AddDatabase("MyDemoDatabase");
+-
+-database.WithCreationScript(initialSqlScript);
++var myDemoDatabaseConnectionString = builder.AddConnectionString("MyDemoDatabase");
+ 
  var cache = builder.AddRedis("cache");
  
  var apiService = builder.AddProject<Projects.DemoAspireApp_ApiService>("apiservice")
--    .WithHttpHealthCheck("/health");
-+    .WithHttpHealthCheck("/health")
-+    .WaitFor(database)
-+    .WithReference(database);
+     .WithHttpHealthCheck("/health")
+-    .WaitFor(database)
+-    .WithReference(database);
++    .WithReference(myDemoDatabaseConnectionString);
  
  builder.AddProject<Projects.DemoAspireApp_Web>("webfrontend")
      .WithExternalHttpEndpoints()
 diff --git a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
-index 2687acb..8c3d8f5 100644
+index 8c3d8f5..20ae487 100644
 --- a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
 +++ b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
-@@ -1,4 +1,4 @@
--<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
-+﻿<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
- 
-   <PropertyGroup>
-     <OutputType>Exe</OutputType>
-@@ -16,6 +16,13 @@
+@@ -16,13 +16,6 @@
  
    <ItemGroup>
      <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
-+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.6.4" />
-+  </ItemGroup>
-+
-+  <ItemGroup>
-+    <None Update="Files\DatabaseInitialScript.sql">
-+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-+    </None>
+-    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.6.4" />
+-  </ItemGroup>
+-
+-  <ItemGroup>
+-    <None Update="Files\DatabaseInitialScript.sql">
+-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+-    </None>
    </ItemGroup>
  
  </Project>
+diff --git a/DemoAspireApp.AppHost/Files/DatabaseInitialScript.sql b/DemoAspireApp.AppHost/Files/DatabaseInitialScript.sql
+deleted file mode 100644
+index b02d0c6..0000000
+--- a/DemoAspireApp.AppHost/Files/DatabaseInitialScript.sql
++++ /dev/null
+@@ -1,28 +0,0 @@
+-DECLARE @DatabaseName NVARCHAR(MAX) = N'MyDemoDatabase';
+-
+-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = N'MyDemoDatabase')
+-BEGIN
+-  CREATE DATABASE MyDemoDatabase;
+-END;
+-GO
+-
+-USE MyDemoDatabase;
+-GO
+-
+--- Create the Tasks table
+-IF OBJECT_ID(N'Tasks', N'U') IS NULL
+-BEGIN
+-    CREATE TABLE Tasks
+-    (
+-        Id        INT PRIMARY KEY IDENTITY(1,1) ,
+-        Description NVARCHAR(MAX) NULL,
+-        Deadline DATETIME2 NULL
+-    );
+-
+-    INSERT 
+-        INTO Tasks (Description, Deadline)
+-        VALUES 
+-            ('Complete workshop survey', GETDATE()),
+-            ('Visit Cologne Cathedral', CAST(DATEADD(day, 3, GETDATE()) AS DATE));
+-END;
+-GO
+\ No newline at end of file
+diff --git a/DemoAspireApp.AppHost/appsettings.json b/DemoAspireApp.AppHost/appsettings.json
+index 31c092a..61d12e0 100644
+--- a/DemoAspireApp.AppHost/appsettings.json
++++ b/DemoAspireApp.AppHost/appsettings.json
+@@ -5,5 +5,8 @@
+       "Microsoft.AspNetCore": "Warning",
+       "Aspire.Hosting.Dcp": "Warning"
+     }
++  },
++  "ConnectionStrings": {
++    "MyDemoDatabase": "Server=localhost\\SQLExpress;Database=MyDemoDatabase;Trusted_Connection=True;TrustServerCertificate=True;"
+   }
+-}
++}
+\ No newline at end of file
