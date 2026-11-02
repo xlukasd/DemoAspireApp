@@ -1,6 +1,6 @@
 namespace DemoAspireApp.Web;
 
-public class WeatherApiClient(HttpClient httpClient)
+public class ApiClient(HttpClient httpClient)
 {
     public async Task<WeatherForecast[]> GetWeatherAsync(int maxItems = 10, CancellationToken cancellationToken = default)
     {
@@ -21,9 +21,24 @@ public class WeatherApiClient(HttpClient httpClient)
 
         return forecasts?.ToArray() ?? [];
     }
+
+    public async Task<IReadOnlyCollection<Task>> GetTasksAsync(CancellationToken cancellationToken = default)
+    {
+        List<Task> tasks = [];
+        await foreach (var task in httpClient.GetFromJsonAsAsyncEnumerable<Task>("/tasks", cancellationToken))
+        {
+            if (task is not null)
+            {
+                tasks.Add(task);
+            }
+        }
+        return tasks;
+    }
 }
 
 public record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+public record Task(int Id, string Description, DateTime Deadline);

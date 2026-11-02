@@ -1,0 +1,45 @@
+﻿@page "/tasks"
+@attribute [StreamRendering(true)]
+@attribute [OutputCache(Duration = 5)]
+
+@inject ApiClient TaskApi
+
+<PageTitle>Tasks</PageTitle>
+
+<h1>Tasks</h1>
+
+<p>This component demonstrates showing data loaded from a backend API service.</p>
+
+@if (tasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Deadline</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td>@task.Description</td>
+                    <td>@task.Deadline</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyCollection<Web.Task>? tasks;
+
+    protected override async System.Threading.Tasks.Task OnInitializedAsync()
+    {
+        tasks = await TaskApi.GetTasksAsync();
+    }
+}
