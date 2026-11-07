@@ -1,9 +1,13 @@
+using DemoAspireApp.AppHost.CustomCommands.SqlServer;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var initialSqlScript = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Files", "DatabaseInitialScript.sql"));
 
-var sqlServer = builder
-    .AddSqlServer("sqlServer");
+var sqlServer = builder.AddSqlServer("sqlServer");
+
+sqlServer
+    .WithClearTasksCommand();
 
 var database = sqlServer.AddDatabase("MyDemoDatabase");
 
