@@ -7,7 +7,8 @@ var initialSqlScript = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "
 var sqlServer = builder.AddSqlServer("sqlServer");
 
 sqlServer
-    .WithClearTasksCommand();
+    .WithClearTasksCommand()
+    .WithAddTasksCommand();
 
 var database = sqlServer.AddDatabase("MyDemoDatabase");
 
