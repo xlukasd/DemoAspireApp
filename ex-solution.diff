@@ -1,48 +1,28 @@
-diff --git a/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs b/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-index 797114c..0911355 100644
---- a/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-+++ b/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-@@ -23,25 +23,38 @@ internal static class AddTasksExtensions
-         builder.WithCommand(
-             name: "addTasks",
-             displayName: "Add tasks",
--            executeCommand: context => OnRunAddTasksCommandAsync(builder),
-+            executeCommand: context => OnRunAddTasksCommandAsync(builder, context),
-             commandOptions);
+diff --git a/DemoAspireApp.AppHost/AppHost.cs b/DemoAspireApp.AppHost/AppHost.cs
+index a4c648e..288abbd 100644
+--- a/DemoAspireApp.AppHost/AppHost.cs
++++ b/DemoAspireApp.AppHost/AppHost.cs
+@@ -29,4 +29,11 @@ builder.AddProject<Projects.DemoAspireApp_Web>("webfrontend")
+     .WithReference(apiService)
+     .WaitFor(apiService);
  
-         return builder;
-     }
- 
-     private static async Task<ExecuteCommandResult> OnRunAddTasksCommandAsync(
--        IResourceBuilder<SqlServerServerResource> builder)
-+        IResourceBuilder<SqlServerServerResource> builder,
-+        ExecuteCommandContext context)
-     {
--        string newTaskDescription = "Go for a walk.";
-+        var interactionService = context.Services.GetRequiredService<IInteractionService>();
- 
--        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();        
-+        InteractionResult<InteractionInput> newTaskInput = await interactionService.PromptInputAsync(
-+            "New task",
-+            "Please enter values for the new task",
-+            "Description",
-+            "Description",
-+            cancellationToken: context.CancellationToken);
++builder.AddPythonApp(
++        name: "tasksWorker",
++        appDirectory: "../DemoAspireApp.DatabaseWorker",
++        scriptPath: "Worker.py")
++    .WithReference(apiService)
++    .WaitFor(apiService);
 +
-+        if (newTaskInput.Canceled)
-+        {
-+            return CommandResults.Failure("Task addition was canceled by the user.");
-+        }
-+
-+        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();
+ builder.Build().Run();
+diff --git a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+index 8c3d8f5..d09dbd3 100644
+--- a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
++++ b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+@@ -15,6 +15,7 @@
+   </ItemGroup>
  
-         try
-         {
-             using var connection = new SqlConnection(sqlServerConnectionString);
-             await connection.OpenAsync();
- 
--            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskDescription}', GETDATE())", connection);
-+            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskInput.Data.Value}', GETDATE())", connection);
-             await command.ExecuteNonQueryAsync();
-         }
-         catch (Exception ex)
+   <ItemGroup>
++    <PackageReference Include="Aspire.Hosting.Python" Version="13.6.4" />
+     <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
+     <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.6.4" />
+   </ItemGroup>
