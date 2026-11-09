@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.11.12315.225 stable
+VisualStudioVersion = 18.11.12315.225
 MinimumVisualStudioVersion = 17.8.0.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DemoAspireApp.AppHost", "DemoAspireApp.AppHost\DemoAspireApp.AppHost.csproj", "{924D8B72-6CA6-4CD1-9EC2-EA8A3D2B97DE}"
 EndProject
@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		ex-solution.diff = ex-solution.diff
 	EndProjectSection
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "DemoAspireApp.DatabaseWorker", "DemoAspireApp.DatabaseWorker\DemoAspireApp.DatabaseWorker.pyproj", "{ED056428-4FAA-4469-A7BD-63F4ADA62D7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +46,8 @@ Global
 		{E9B3E722-A758-451C-83B0-17BD55621A4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9B3E722-A758-451C-83B0-17BD55621A4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E9B3E722-A758-451C-83B0-17BD55621A4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED056428-4FAA-4469-A7BD-63F4ADA62D7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED056428-4FAA-4469-A7BD-63F4ADA62D7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
