@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DemoAspireApp.ApiService\DemoAspireApp.ApiService.csproj" />
+    <ProjectReference Include="..\DemoAspireApp.Shared\DemoAspireApp.Shared.csproj" IsAspireProjectResource="false" />
     <ProjectReference Include="..\DemoAspireApp.Web\DemoAspireApp.Web.csproj" />
   </ItemGroup>
 
