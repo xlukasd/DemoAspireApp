@@ -61,7 +61,8 @@ app.MapPost("/tasks", async ([FromServices] MyDbContext dbContext, [FromBody] Ta
     await dbContext.SaveChangesAsync();
 
     return Results.Created($"/tasks/{task.Id}", task);
-});
+})
+.WithName("AddTask");
 
 app.MapDefaultEndpoints();
 
