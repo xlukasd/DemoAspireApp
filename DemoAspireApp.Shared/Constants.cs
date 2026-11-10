@@ -1,6 +1,6 @@
-﻿namespace DemoAspireApp.Web
+﻿namespace DemoAspireApp.Shared
 {
-    public class Constants
+    public static class Constants
     {
         public const string TaskApiProjectName = "taskapi";
     }
