@@ -1,27 +1,31 @@
-diff --git a/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs b/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-index 797114c..0911355 100644
---- a/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-+++ b/DemoAspireApp.AppHost/CustomCommands/SqlServer/AddTasksExtensions.cs
-@@ -23,25 +23,38 @@ internal static class AddTasksExtensions
-         builder.WithCommand(
-             name: "addTasks",
-             displayName: "Add tasks",
--            executeCommand: context => OnRunAddTasksCommandAsync(builder),
-+            executeCommand: context => OnRunAddTasksCommandAsync(builder, context),
-             commandOptions);
+diff --git a/DemoAspireApp.AppHost/CustomCommands/ApiService/AddTasksExtensions.cs b/DemoAspireApp.AppHost/CustomCommands/ApiService/AddTasksExtensions.cs
+index 78c6f40..055f919 100644
+--- a/DemoAspireApp.AppHost/CustomCommands/ApiService/AddTasksExtensions.cs
++++ b/DemoAspireApp.AppHost/CustomCommands/ApiService/AddTasksExtensions.cs
+@@ -10,8 +10,41 @@ internal static class AddTasksExtensions
+     public static IResourceBuilder<ProjectResource> WithAddTasksHttpCommand(
+         this IResourceBuilder<ProjectResource> builder)
+     {
+-        //TODO Place your code here
++        builder.WithHttpCommand(path: "/tasks",
++                                displayName: "Add Task",
++                                commandName: "AddTask",
++                                commandOptions: new HttpCommandOptions()
++                                {
++                                    Method = HttpMethod.Post,
++                                    Description = "Adds a new task.",
++                                    IconName = "Add",
++                                    IsHighlighted = true,
++                                    PrepareRequest = PrepareRequestAsync
++                                });
  
          return builder;
      }
- 
-     private static async Task<ExecuteCommandResult> OnRunAddTasksCommandAsync(
--        IResourceBuilder<SqlServerServerResource> builder)
-+        IResourceBuilder<SqlServerServerResource> builder,
-+        ExecuteCommandContext context)
-     {
--        string newTaskDescription = "Go for a walk.";
++
++    private static async Task PrepareRequestAsync(HttpCommandRequestContext context)
++    {
 +        var interactionService = context.Services.GetRequiredService<IInteractionService>();
- 
--        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();        
++
 +        InteractionResult<InteractionInput> newTaskInput = await interactionService.PromptInputAsync(
 +            "New task",
 +            "Please enter values for the new task",
@@ -31,18 +35,13 @@ index 797114c..0911355 100644
 +
 +        if (newTaskInput.Canceled)
 +        {
-+            return CommandResults.Failure("Task addition was canceled by the user.");
++            throw new OperationCanceledException("Task addition was canceled by the user.");
 +        }
 +
-+        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();
- 
-         try
-         {
-             using var connection = new SqlConnection(sqlServerConnectionString);
-             await connection.OpenAsync();
- 
--            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskDescription}', GETDATE())", connection);
-+            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskInput.Data.Value}', GETDATE())", connection);
-             await command.ExecuteNonQueryAsync();
-         }
-         catch (Exception ex)
++        TaskDto taskDto = new(newTaskInput.Data.Value!, DateOnly.FromDateTime(DateTime.Now.AddDays(7)));
++
++        var jsonContent = new StringContent(JsonSerializer.Serialize(taskDto), Encoding.UTF8, MediaTypeNames.Application.Json);
++
++        context.Request.Content = jsonContent;
++    }
+ }
