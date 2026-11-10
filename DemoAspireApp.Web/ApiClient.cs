@@ -22,17 +22,17 @@ public class ApiClient(HttpClient httpClient)
         return forecasts?.ToArray() ?? [];
     }
 
-    public async Task<IReadOnlyCollection<Task>> GetTasksAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<Container>> GetTasksAsync(CancellationToken cancellationToken = default)
     {
-        List<Task> tasks = [];
-        await foreach (var task in httpClient.GetFromJsonAsAsyncEnumerable<Task>("/tasks", cancellationToken))
+        List<Container> containers = [];
+        await foreach (var container in httpClient.GetFromJsonAsAsyncEnumerable<Container>("/containers", cancellationToken))
         {
-            if (task is not null)
+            if (container is not null)
             {
-                tasks.Add(task);
+                containers.Add(container);
             }
         }
-        return tasks;
+        return containers;
     }
 }
 
@@ -41,4 +41,4 @@ public record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
 
-public record Task(int Id, string Description, DateTime Deadline);
+public record Container(string Name);

@@ -1,16 +1,16 @@
-﻿@page "/tasks"
+﻿@page "/containers"
 @attribute [StreamRendering(true)]
 @attribute [OutputCache(Duration = 5)]
 
-@inject ApiClient TaskApi
+@inject ApiClient Api
 
-<PageTitle>Tasks</PageTitle>
+<PageTitle>Containers</PageTitle>
 
-<h1>Tasks</h1>
+<h1>Containers</h1>
 
 <p>This component demonstrates showing data loaded from a backend API service.</p>
 
-@if (tasks == null)
+@if (containers == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -19,16 +19,14 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Description</th>
-                <th>Deadline</th>
+                <th>Name</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var task in tasks)
+            @foreach (var container in containers)
             {
                 <tr>
-                    <td>@task.Description</td>
-                    <td>@task.Deadline</td>
+                    <td>@container.Name</td>
                 </tr>
             }
         </tbody>
@@ -36,10 +34,10 @@ else
 }
 
 @code {
-    private IReadOnlyCollection<Web.Task>? tasks;
+    private IReadOnlyCollection<Web.Container>? containers;
 
     protected override async System.Threading.Tasks.Task OnInitializedAsync()
     {
-        tasks = await TaskApi.GetTasksAsync();
+        containers = await Api.GetTasksAsync();
     }
 }

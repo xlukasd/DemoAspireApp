@@ -42,12 +42,17 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/tasks", async (MyDbContext dbContext) =>
+app.MapGet("/containers", async (MyDbContext dbContext) =>
 {
-    var tasks = await dbContext.Tasks.ToListAsync();
-    return tasks;
+    var containers = new List<Container>
+    {
+        new Container("Container 1"),
+        new Container("Container 2"),
+        new Container("Container 3")
+    };
+    return containers;
 })
-.WithName("GetTasks");
+.WithName("GetContainers");
 
 app.MapDefaultEndpoints();
 
@@ -57,3 +62,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+public record Container(string Name);
