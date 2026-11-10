@@ -1,4 +1,3 @@
-using DemoAspireApp.AppHost.CustomCommands.ApiService;
 using DemoAspireApp.AppHost.CustomCommands.SqlServer;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -20,8 +19,7 @@ var cache = builder.AddRedis("cache");
 var apiService = builder.AddProject<Projects.DemoAspireApp_ApiService>("apiservice")
     .WithHttpHealthCheck("/health")
     .WaitFor(database)
-    .WithReference(database)
-    .WithAddTasksHttpCommand();
+    .WithReference(database);
 
 builder.AddProject<Projects.DemoAspireApp_Web>("webfrontend")
     .WithExternalHttpEndpoints()
@@ -32,5 +30,3 @@ builder.AddProject<Projects.DemoAspireApp_Web>("webfrontend")
     .WaitFor(apiService);
 
 builder.Build().Run();
-
-record TaskDto(string Description, DateOnly Deadline);

@@ -1,5 +1,4 @@
 using DemoAspireApp.ApiService.Domain.Model;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,19 +49,6 @@ app.MapGet("/tasks", async (MyDbContext dbContext) =>
 })
 .WithName("GetTasks");
 
-app.MapPost("/tasks", async ([FromServices] MyDbContext dbContext, [FromBody] TaskDto taskDto) =>
-{
-    var task = new DemoAspireApp.ApiService.Domain.Model.Task
-    {
-        Description = taskDto.Description,
-        Deadline = taskDto.Deadline.ToDateTime(TimeOnly.MinValue)
-    };
-    dbContext.Tasks.Add(task);
-    await dbContext.SaveChangesAsync();
-
-    return Results.Created($"/tasks/{task.Id}", task);
-});
-
 app.MapDefaultEndpoints();
 
 app.Run();
@@ -71,5 +57,3 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
-
-record TaskDto(string Description, DateOnly Deadline);

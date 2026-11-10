@@ -23,38 +23,25 @@ internal static class AddTasksExtensions
         builder.WithCommand(
             name: "addTasks",
             displayName: "Add tasks",
-            executeCommand: context => OnRunAddTasksCommandAsync(builder, context),
+            executeCommand: context => OnRunAddTasksCommandAsync(builder),
             commandOptions);
 
         return builder;
     }
 
     private static async Task<ExecuteCommandResult> OnRunAddTasksCommandAsync(
-        IResourceBuilder<SqlServerServerResource> builder,
-        ExecuteCommandContext context)
+        IResourceBuilder<SqlServerServerResource> builder)
     {
-        var interactionService = context.Services.GetRequiredService<IInteractionService>();
+        string newTaskDescription = "Go for a walk.";
 
-        InteractionResult<InteractionInput> newTaskInput = await interactionService.PromptInputAsync(
-            "New task",
-            "Please enter values for the new task",
-            "Description",
-            "Description",
-            cancellationToken: context.CancellationToken);
-
-        if (newTaskInput.Canceled)
-        {
-            return CommandResults.Failure("Task addition was canceled by the user.");
-        }
-
-        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();
+        var sqlServerConnectionString = await builder.Resource.GetConnectionStringAsync();        
 
         try
         {
             using var connection = new SqlConnection(sqlServerConnectionString);
             await connection.OpenAsync();
 
-            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskInput.Data.Value}', GETDATE())", connection);
+            using var command = new SqlCommand($"INSERT INTO [MyDemoDatabase].[dbo].[Tasks] (Description, Deadline) VALUES ('{newTaskDescription}', GETDATE())", connection);
             await command.ExecuteNonQueryAsync();
         }
         catch (Exception ex)
