@@ -1,0 +1,28 @@
+diff --git a/DemoAspireApp.AppHost/AppHost.cs b/DemoAspireApp.AppHost/AppHost.cs
+index 4a0fdea..f850b1f 100644
+--- a/DemoAspireApp.AppHost/AppHost.cs
++++ b/DemoAspireApp.AppHost/AppHost.cs
+@@ -1,5 +1,11 @@
+ var builder = DistributedApplication.CreateBuilder(args);
+ 
++builder.AddDockerComposeEnvironment("env")
++        .WithProperties(env =>
++    {
++        env.DashboardEnabled = true;
++    });
++
+ var cache = builder.AddRedis("cache");
+ 
+ var apiService = builder.AddProject<Projects.DemoAspireApp_ApiService>("apiservice")
+diff --git a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+index 2687acb..25307a3 100644
+--- a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
++++ b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+@@ -15,6 +15,7 @@
+   </ItemGroup>
+ 
+   <ItemGroup>
++    <PackageReference Include="Aspire.Hosting.Docker" Version="13.6.4" />
+     <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
+   </ItemGroup>
+ 
