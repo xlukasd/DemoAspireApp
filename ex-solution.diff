@@ -1,0 +1,26 @@
+diff --git a/DemoAspireApp.AppHost/AppHost.cs b/DemoAspireApp.AppHost/AppHost.cs
+index 4a0fdea..6154e6d 100644
+--- a/DemoAspireApp.AppHost/AppHost.cs
++++ b/DemoAspireApp.AppHost/AppHost.cs
+@@ -1,5 +1,9 @@
+ var builder = DistributedApplication.CreateBuilder(args);
+ 
++builder
++    .AddAzureContainerAppEnvironment("aca-env")
++    .WithDashboard(true);
++
+ var cache = builder.AddRedis("cache");
+ 
+ var apiService = builder.AddProject<Projects.DemoAspireApp_ApiService>("apiservice")
+diff --git a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+index 2687acb..da6ce86 100644
+--- a/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
++++ b/DemoAspireApp.AppHost/DemoAspireApp.AppHost.csproj
+@@ -15,6 +15,7 @@
+   </ItemGroup>
+ 
+   <ItemGroup>
++    <PackageReference Include="Aspire.Hosting.Azure.AppContainers" Version="13.6.5" />
+     <PackageReference Include="Aspire.Hosting.Redis" Version="13.6.4" />
+   </ItemGroup>
+ 
