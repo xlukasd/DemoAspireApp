@@ -1,3 +1,5 @@
+using Azure.Storage.Blobs;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -8,6 +10,8 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.AddAzureBlobServiceClient(connectionName: "blobs", options => options.DisableHealthChecks = true);
 
 var app = builder.Build();
 
@@ -37,17 +41,24 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/containers", () =>
+app.MapGet("/containers", async (BlobServiceClient blobServiceClient) =>
 {
-    var containers = new List<Container>
+    var containers = new List<Container>();
+
+    await foreach (var containerItem in blobServiceClient.GetBlobContainersAsync())
     {
-        new("Container 1"),
-        new("Container 2"),
-        new("Container 3")
-    };
+        containers.Add(new Container(containerItem.Name));
+    }
     return containers;
 })
 .WithName("GetContainers");
+
+app.MapPost("/containers", async (BlobServiceClient blobServiceClient, Container container) =>
+{
+    var response = await blobServiceClient.CreateBlobContainerAsync(container.Name.ToLowerInvariant());
+    return Results.Created($"/containers/{container.Name}", new Container(response.Value.Name));
+})
+.WithName("CreateContainer");
 
 app.MapDefaultEndpoints();
 
