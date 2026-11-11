@@ -1,6 +1,3 @@
-using DemoAspireApp.ApiService.Domain.Model;
-using Microsoft.EntityFrameworkCore;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
@@ -11,8 +8,6 @@ builder.Services.AddProblemDetails();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
-builder.AddSqlServerDbContext<MyDbContext>(connectionName: "MyDemoDatabase");
 
 var app = builder.Build();
 
@@ -42,13 +37,13 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast");
 
-app.MapGet("/containers", async (MyDbContext dbContext) =>
+app.MapGet("/containers", () =>
 {
     var containers = new List<Container>
     {
-        new Container("Container 1"),
-        new Container("Container 2"),
-        new Container("Container 3")
+        new("Container 1"),
+        new("Container 2"),
+        new("Container 3")
     };
     return containers;
 })
