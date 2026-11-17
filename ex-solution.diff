@@ -1,0 +1,76 @@
+diff --git a/DemoAspireApp.Tests/WebTests.cs b/DemoAspireApp.Tests/WebTests.cs
+index a44b81d..fa9363b 100644
+--- a/DemoAspireApp.Tests/WebTests.cs
++++ b/DemoAspireApp.Tests/WebTests.cs
+@@ -1,10 +1,13 @@
++using Aspire.Hosting;
+ using Microsoft.Extensions.Logging;
++using NUnit.Framework.Constraints;
++using System.Net.Http.Json;
+ 
+ namespace DemoAspireApp.Tests;
+ 
+ public class WebTests
+ {
+-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
++    private static readonly TimeSpan _defaultTimeout = TimeSpan.FromSeconds(60);
+ 
+     [Test]
+     public async Task GetWebResourceRootReturnsOkStatusCode()
+@@ -25,15 +28,47 @@ public class WebTests
+             clientBuilder.AddStandardResilienceHandler();
+         });
+ 
+-        await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
+-        await app.StartAsync(cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
++        await using var app = await appHost.BuildAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
++        await app.StartAsync(cancellationToken).WaitAsync(_defaultTimeout, cancellationToken);
++
++        var apiServiceHttpClient = app.CreateHttpClient("apiservice");
++        await app.ResourceNotifications
++            .WaitForResourceHealthyAsync("apiservice", cancellationToken)
++            .WaitAsync(_defaultTimeout, cancellationToken);
++
++        var tasksResponse = await apiServiceHttpClient.GetAsync("/tasks", cancellationToken);
++
++        await StopSqlServerAsync(app, cancellationToken);
+ 
+         // Act
+-        var httpClient = app.CreateHttpClient("webfrontend");
+-        await app.ResourceNotifications.WaitForResourceHealthyAsync("webfrontend", cancellationToken).WaitAsync(DefaultTimeout, cancellationToken);
+-        var response = await httpClient.GetAsync("/", cancellationToken);
++        var tasksResponseAfterDatabaseShutdown = await apiServiceHttpClient.GetAsync("/tasks", cancellationToken);
++        var deserializedTasksAfterDatabaseShutdown = await tasksResponseAfterDatabaseShutdown.Content.ReadFromJsonAsync<List<TaskDTO>>(cancellationToken: cancellationToken);
+ 
+-        // Assert
+-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
++        using (Assert.EnterMultipleScope())
++        {
++            Assert.That(tasksResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
++            Assert.That(tasksResponseAfterDatabaseShutdown.StatusCode, Is.EqualTo(HttpStatusCode.OK));
++            Assert.That(deserializedTasksAfterDatabaseShutdown, TasksCollectionConstraint());
++        }
+     }
+-}
++
++    private static async Task StopSqlServerAsync(DistributedApplication app, CancellationToken cancellationToken)
++    {
++        const string sqlServerResourceName = "sqlServer";
++
++        await app.ResourceCommands
++            .ExecuteCommandAsync(sqlServerResourceName, KnownResourceCommands.StopCommand, cancellationToken)
++            .WaitAsync(_defaultTimeout, cancellationToken);
++
++        await app.ResourceNotifications.WaitForResourceAsync(sqlServerResourceName, KnownResourceStates.Exited, cancellationToken);
++    }
++
++    private static Constraint TasksCollectionConstraint()
++    {
++        return Has.Count.EqualTo(2)
++            .And.One.Matches<TaskDTO>(t => t.Description == "Complete workshop survey")
++            .And.One.Matches<TaskDTO>(t => t.Description == "Visit Cologne Cathedral");
++    }
++
++    record TaskDTO(int Id, string Description, DateTime Deadline);
++}
+\ No newline at end of file
