@@ -1,4 +1,4 @@
-﻿namespace DemoAspireApp.ApiService
+﻿namespace DemoAspireApp.ApiService.DataProviders
 {
     internal interface IIdealWeatherForecastProvider
     {

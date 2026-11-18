@@ -1,4 +1,4 @@
-using DemoAspireApp.ApiService;
+using DemoAspireApp.ApiService.DataProviders;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);

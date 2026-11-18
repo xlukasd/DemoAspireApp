@@ -12,7 +12,14 @@
 
 @if (forecast == null)
 {
-    <p><em>Loading...</em></p>
+    if (loadError is not null)
+    {
+        <p class="text-danger"><em>@loadError</em></p>
+    }
+    else
+    {
+        <p><em>Loading...</em></p>
+    }
 }
 else
 {
@@ -38,9 +45,17 @@ else
 
 @code {
     private WeatherForecast? forecast;
+    private string? loadError;
 
     protected override async Task OnInitializedAsync()
     {
-        forecast = await WeatherApi.GetIdealWeatherAsync();
+        try
+        {
+            forecast = await WeatherApi.GetIdealWeatherAsync();
+        }
+        catch
+        {
+            loadError = "Failed to load ideal weather.";
+        }
     }
 }
